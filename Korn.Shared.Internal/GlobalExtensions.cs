@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 public static class KornSharedGlobalExtensions
 {
@@ -18,6 +20,15 @@ public static class KornSharedGlobalExtensions
         return self.Split(splitter, options);
 #elif NET472
         return self.Split(new string[] { splitter }, options);
+#endif
+    }
+
+    public static byte[] GetBytesEx(this Encoding encoding, string input, int index, int length)
+    {
+#if NET8_0
+        return encoding.GetBytes(input, index, length);
+#elif NET472
+        return encoding.GetBytes(input);
 #endif
     }
 
@@ -48,7 +59,8 @@ public static class KornSharedGlobalExtensions
             }
         return null;
     }
-
+        
+    // Unlike the original MethodInfo.GetParameters this method adds to the parameters of this.
     public static Type[] GetArgumentsEx(this MethodInfo method)
     {
         var parameters = method.GetParameters();
@@ -63,12 +75,26 @@ public static class KornSharedGlobalExtensions
         else
         {
             var arguments = new Type[parameters.Length + 1];
-            for (var i = 0; i < parameters.Length; i++)
-                arguments[i + 1] = parameters[i].ParameterType;
-
             arguments[0] = method.DeclaringType;
+            for (var i = 1; i < arguments.Length; i++)
+                arguments[i] = parameters[i - 1].ParameterType;
 
             return arguments;
         }
     }
+
+    public static Type[] GetParametersEx(this MethodInfo method)
+    {
+        var parameters = GetArgumentsEx(method);
+        var returnType = method.ReturnType;
+        if (returnType != typeof(void))
+        {
+            Array.Resize(ref parameters, parameters.Length + 1);
+            parameters[parameters.Length - 1] = returnType;
+        }
+
+        return parameters;
+    }
+
+    public static string ToHexString(this IntPtr nativeInteger) => Convert.ToString((long)nativeInteger, 16);
 }
