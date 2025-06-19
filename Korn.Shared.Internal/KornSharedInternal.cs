@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Korn.Shared.Internal
+namespace Korn.Shared
 {
     public static class KornSharedInternal
     {
